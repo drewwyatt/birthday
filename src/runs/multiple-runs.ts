@@ -1,26 +1,26 @@
-import { report, showResults, toDateSetOfSize, hasMatchIn } from '../utils'
+import { Ora } from 'ora'
+import { showResults, toDateSetOfSize, hasMatchIn } from '../utils'
 
-const runForSize = (size: number, idx: number) => {
-  report(`Generating birthdays for run ${idx + 1}...`)
+const runForSize = (size: number, progress: Ora) => (_: unknown, idx: number) => {
+  progress.text = `Generating birthdays for run ${idx + 1}...`
   const birthdays = toDateSetOfSize(size)
-  showResults('All Dates:', birthdays)
-  report('Checking for matches...')
+  progress.text = `Checking for matches for run ${idx + 1}...`
   const matches = birthdays.filter(hasMatchIn(birthdays))
-  showResults('Matches:', matches)
   return matches.length
 }
 
 const gt = (a: number) => (b: number) => b > a
 
-const startRuns = (numberOfRuns: number, runSize: number) => {
-  report(`Starting ${numberOfRuns} runs of size ${runSize}...`, true)
-  const doRun = (_: unknown, idx: number) => runForSize(runSize, idx)
+const startRuns = async (progress: Ora, numberOfRuns: number, runSize: number) => {
+  progress.text = `Starting ${numberOfRuns} runs of size ${runSize}...`
   const results = Array(numberOfRuns)
     .fill(null)
-    .map(doRun)
-  // console.log(results)
+    .map(runForSize(runSize, progress))
+
   const matches = results.filter(gt(0)).length
-  report(`Runs with matches: ${matches} (${(matches * 100) / numberOfRuns}%)`, true)
+
+  showResults('Run Results:', results)
+  return `Runs with matches: ${matches} (${(matches * 100) / numberOfRuns}%)`
 }
 
 export default startRuns
